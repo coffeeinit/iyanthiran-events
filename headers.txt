@@ -1,0 +1,11 @@
+HTTP/1.0 500 Internal Server Error
+Host: localhost:5000
+Date: Thu, 24 Jul 2025 15:43:36 GMT
+Connection: close
+X-Powered-By: PHP/8.2.23
+Set-Cookie: PHPSESSID=e7b9d668077bd120efc860b8c7399d3d; path=/
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Content-type: text/html; charset=UTF-8
+

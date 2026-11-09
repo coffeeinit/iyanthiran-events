@@ -1,0 +1,325 @@
+📘 Software Requirements Specification (SRS)
+🧾 1. Document Control
+Project Name: Event Registration & Admin Management System
+
+Client: Ehendran (and replicated client domains)
+
+Version: 1.0
+
+Technology Stack: Plain PHP 8.x, MySQL, Razorpay, PHPMailer
+
+Hosting Environment: Hostinger (Shared Hosting)
+
+Deployment Structure: Public frontend in public_html/, admin and backend logic in subdirectories
+
+📌 2. Purpose
+This system is designed to provide a fully functional, secure, and user-friendly event listing, registration, and admin management system that can be deployed and replicated across multiple domains and clients, managed through a centralized or individual admin panel.
+
+🎯 3. Scope
+The system allows:
+
+Users to view upcoming/live events
+
+Register for free or paid events (Razorpay)
+
+OTP email verification before confirming registration
+
+Admins to manage events, registrations, analytics, and gallery uploads
+
+All actions logged and exportable to CSV
+
+UTM campaign tracking, YouTube video interaction tracking
+
+🔐 4. Users & Roles
+Role	Description
+Admin	Has full access to all admin functionalities
+Visitor	Can view events, register, view gallery
+
+🔸 Multi-role not required, as per confirmation.
+
+📂 5. Folder Structure
+bash
+Copy
+Edit
+/public_html/
+├── index.php                  # Homepage
+├── events.php                 # All events listing
+├── event.php                  # Event detail (slug-based)
+├── register.php               # Registration handler
+├── verify_otp.php             # OTP verification
+├── gallery.php                # Event-specific gallery
+├── success.php                # Registration/payment success
+├── /assets/
+│   ├── /css/
+│   ├── /js/
+│   ├── /gallery/
+│       ├── photos/{event_id}/
+│       └── videos/{event_id}/
+├── /admin/
+│   ├── login.php
+│   ├── logout.php
+│   ├── dashboard.php
+│   ├── events.php
+│   ├── event_add.php
+│   ├── event_edit.php
+│   ├── registrations.php
+│   ├── gallery_upload.php
+│   ├── analytics.php
+│   └── /includes/
+│       ├── auth.php
+│       ├── header.php
+│       └── footer.php
+├── /includes/
+│   ├── db.php
+│   ├── config.php
+│   ├── functions.php
+│   ├── razorpay.php
+│   ├── otp.php
+│   ├── email.php
+│   └── hashid.php
+├── /logs/                     # CSV exports if needed
+└── .htaccess                  # SEO-friendly routing
+📋 6. Functional Requirements
+6.1 Admin Panel
+6.1.1 Login & Logout
+Secure login using PHP sessions
+
+Password stored as hash in DB
+
+Logout destroys session
+
+6.1.2 Dashboard
+Overview cards:
+
+Total events
+
+Total registrations
+
+Today’s traffic
+
+Total payments
+
+Recent registrations preview
+
+6.1.3 Event Management
+Add/Edit/Delete Events
+
+Set status: Upcoming, Live, Past
+
+Enable/Disable (Hide event)
+
+Auto-generate encrypted slug (ID)
+
+6.1.4 Gallery Upload
+Photos and videos uploaded to:
+
+/assets/gallery/photos/{event_id}/
+
+/assets/gallery/videos/{event_id}/
+
+Supported: .jpg, .png, .mp4, YouTube embeds
+
+6.1.5 Registration Management
+View all registrations per event
+
+Filter/search
+
+Export to CSV
+
+6.1.6 Analytics
+View UTM breakdown
+
+Page views per event
+
+YouTube interaction logs
+
+Registrations per source
+
+Export to CSV
+
+6.1.7 CSV Export
+All events
+
+Registrations (per event & global)
+
+Payments
+
+6.2 Public Website
+6.2.1 Home & Event Pages
+Homepage: All upcoming/live events in card layout
+
+Event Page: Full details, YouTube embed, image banner, gallery link
+
+6.2.2 Registration
+Check for duplicate registration (same email/phone)
+
+Email OTP verification before confirmation
+
+Free events: Direct registration
+
+Paid events:
+
+Razorpay integration
+
+Payment confirmation via Razorpay API/Webhook
+
+6.2.3 OTP Verification
+Send OTP to email using PHPMailer
+
+OTP expires in 5 minutes
+
+Store hashed OTP temporarily in DB
+
+6.2.4 Registration Confirmation
+Email confirmation after success
+
+WhatsApp API call to send confirmation message
+
+Registration stored with UTM source & metadata
+
+6.2.5 Reminder
+CRON-compatible script checks events starting in 24 hours
+
+Sends reminder email
+
+6.2.6 Gallery
+Photos & Videos per event
+
+Loaded from assets/gallery/
+
+6.3 Tracking & Analytics
+6.3.1 UTM Campaign Tracking
+Capture utm_source, utm_medium, utm_campaign in all public pages
+
+Stored per visit and registration
+
+6.3.2 YouTube IFrame API
+Track:
+
+Play Start
+
+Pause
+
+Complete
+
+Log per video per event
+
+6.3.3 Page View Logging
+Log:
+
+IP address
+
+Referrer
+
+UTM data
+
+Timestamp
+
+Page name
+
+🗄️ 7. Database Design (Simplified)
+admin_users
+Field	Type
+id	INT (PK)
+username	VARCHAR(50)
+password_hash	VARCHAR(255)
+created_at	TIMESTAMP
+
+events
+Field	Type
+id	INT (PK)
+title	VARCHAR(255)
+slug	VARCHAR(255) UNIQUE
+date	DATE
+time	TIME
+venue	TEXT
+is_paid	BOOLEAN
+price	DECIMAL(10,2)
+status	ENUM(...)
+is_hidden	BOOLEAN
+created_at	TIMESTAMP
+
+registrations
+Field	Type
+id	INT (PK)
+event_id	INT (FK)
+name	VARCHAR(255)
+email	VARCHAR(255)
+phone	VARCHAR(20)
+otp_verified	BOOLEAN
+payment_id	VARCHAR(255)
+payment_status	VARCHAR(50)
+utm_source	VARCHAR(100)
+utm_medium	VARCHAR(100)
+utm_campaign	VARCHAR(100)
+created_at	TIMESTAMP
+
+event_views
+Field	Type
+id	INT (PK)
+event_id	INT
+ip_address	VARCHAR(45)
+referrer	TEXT
+user_agent	TEXT
+utm_*	VARCHAR(...)
+created_at	TIMESTAMP
+
+event_gallery
+Field	Type
+id	INT (PK)
+event_id	INT (FK)
+media_type	ENUM('photo','video')
+media_path	TEXT
+created_at	TIMESTAMP
+
+🔐 8. Security Requirements
+Admin password hashed with password_hash()
+
+OTP hashed & stored temporarily
+
+File uploads validated (MIME type, size)
+
+SQL queries use prepared statements
+
+Slugs encrypted (using base64url or hashids)
+
+Admin panel protected by session
+
+CSRF protection on critical forms
+
+📱 9. UI/UX Requirements
+Area	Requirement
+Admin Panel	Table-based layout, sidebar nav
+Public Pages	Responsive, card layout, mobile-friendly
+Registration	Simple form, field validation, OTP
+Gallery	Lightbox or card-based photo/video viewer
+
+📤 10. Export Features
+Event List → CSV
+
+Registrations per Event → CSV
+
+Payments → CSV
+
+UTM Analytics → CSV
+
+Gallery metadata export (optional)
+
+✅ 11. Confirmed Exclusions
+Multi-role access (not required)
+
+User login accounts (not required)
+
+Laravel, Composer-based setup (excluded)
+
+🧪 12. Testing & Deployment
+Testing on Hostinger test subdomain
+
+Email via SMTP or PHP Mail (via PHPMailer)
+
+CRON for reminder emails (manual trigger tested)
+
+Final deployment replicable via copy-paste across multiple domains
+
+✅ Summary
+You now have a full production-grade SRS to support the build of this system in plain PHP — lightweight, scalable, replicable, and Hostinger-friendly.
